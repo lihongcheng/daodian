@@ -1,0 +1,1 @@
+<resources><string name="service_description">读取企微记录并按所选模式执行：真实打卡可能拍摄当前画面并提交；界面测试到页面后停止。截图用于核验实际日期、类型、时间和状态。必须由你开启此服务。</string></resources>

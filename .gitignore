@@ -1,0 +1,66 @@
+# Gradle, Android and native build output
+.gradle/
+.kotlin/
+**/build/
+**/.cxx/
+**/.externalNativeBuild/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+
+# Machine-specific SDK paths and IDE files
+local.properties
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+*~
+*.swp
+*.swo
+
+# Signing keys, local credentials and private configuration
+.local/
+private/
+.env
+.env.*
+!.env.example
+!.env.sample
+*.keystore
+*.jks
+*.p12
+*.pfx
+*.key
+*.pem
+keystore.properties
+signing.properties
+credentials.properties
+phone_pin
+smtp_authorization
+
+# Device data, test runs and generated delivery bundles
+/work/
+/outputs/
+/screenshots/
+/captures/
+/verification/
+/evidence/
+/logs/
+/test-results/
+/*.zip
+*.log
+*.hprof
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+
+# Keep Gradle Wrapper binaries, source assets and regression fixtures tracked.
+# In particular: gradle/wrapper/gradle-wrapper.jar and app/src/androidTest/assets/calendar.png.

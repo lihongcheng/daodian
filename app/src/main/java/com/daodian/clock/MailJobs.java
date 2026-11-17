@@ -1,0 +1,17 @@
+package com.daodian.clock;
+import android.content.*;
+import com.daodian.clock.core.*;
+import org.json.*;
+import java.io.*;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.util.concurrent.*;
+
+public final class MailJobs {
+    private static final ConcurrentHashMap<String,Boolean> busy=new ConcurrentHashMap<>();
+    public static void resend(Context c,String id){JSONObject r=Records.get(c).get(id);if(r==null||!(r.optString("status").equals("PASSED")||r.optString("status").equals("SUCCESS")||r.optString("status").equals("ALREADY_DONE"))||r.optString("screenshot").isEmpty())return;if(busy.putIfAbsent(id,true)!=null)return;new Thread(()->{try{send(c,r,true);}finally{busy.remove(id);}},"resend-test-report").start();}
+    public static synchronized void send(Context context,JSONObject record,boolean explicit){Prefs prefs=new Prefs(context);Records records=Records.get(context);MailClient client=new MailClient();String secret=null;try{JSONObject proof=record.optJSONObject("evidence");
+        if(!explicit&&(record.optString("mailStatus").equals("SENT")||record.optString("mailStatus").equals("UNKNOWN")))return;
+        if(!explicit&&proof!=null&&records.evidenceMailed(proof.optString("fingerprint"))){record.put("mailStatus","DEDUPLICATED");records.put(record);return;}JSONObject config=prefs.mail();if(!config.optBoolean("enabled")||!config.optBoolean("configured")){record.put("mailStatus","UNCONFIGURED");records.put(record);return;}File file=new File(new File(context.getFilesDir(),"screenshots"),record.getString("screenshot"));if(!file.isFile()){record.put("mailStatus","NO_SCREENSHOT");records.put(record);return;}record.put("mailStatus","SENDING");records.put(record);byte[] png=java.nio.file.Files.readAllBytes(file.toPath());secret=prefs.mailSecret();String address=config.getString("address");client.login(address,secret);secret=null;ZonedDateTime at=Instant.ofEpochMilli(record.optLong("arrivedAt")).atZone(ScheduleRules.ZONE);MailClient.Result receipt=client.send(address,proof==null?MailClient.message(address,record.optString("kind"),at.toLocalDate().toString(),at.format(DateTimeFormatter.ofPattern("HH:mm:ss")),png):MailClient.attendanceMessage(address,new AttendanceRules.Evidence(proof.getString("date"),proof.getString("kind"),proof.getString("time"),proof.getString("state")),png));record.put("mailRecipient",address).put("mailStatus","SENT").put("smtpCode",receipt.code).put("smtpReply",receipt.reply);records.put(record);Notifications.result(context,30,proof==null?"界面测试截图邮件已发送":"企微记录截图邮件已发送","发件服务器已接受本次邮件");}catch(Exception e){try{record.put("mailStatus",client.resultUncertain()?"UNKNOWN":"FAILED").put("mailError",client.resultUncertain()?"发送结果不明，请先核对邮箱，勿自动重发":"邮件未发送，请检查邮箱配置和网络");records.put(record);}catch(Exception ignored){}}finally{secret=null;client.close();context.sendBroadcast(new Intent("com.daodian.clock.STATE_CHANGED").setPackage(context.getPackageName()));}}
+    public static void connection(Context context){new Thread(()->{Prefs p=new Prefs(context);try(MailClient client=new MailClient()){JSONObject config=p.mail();client.login(config.getString("address"),p.mailSecret());p.mailConnection("ok");Notifications.result(context,31,"邮箱连接验证通过","仅验证登录，没有发送邮件");}catch(Exception e){p.mailConnection("failed");Notifications.result(context,31,"邮箱连接未通过","请检查邮箱帐号、授权码和网络");}context.sendBroadcast(new Intent("com.daodian.clock.STATE_CHANGED").setPackage(context.getPackageName()));},"mail-connection-test").start();}
+}
