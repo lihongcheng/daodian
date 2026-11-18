@@ -19,14 +19,9 @@ public class DeviceVerificationTests extends InstrumentationTestCase {
     public void testMailRecoveryAndFingerprintDedup()throws Exception{
         Context c=getInstrumentation().getTargetContext();c.deleteDatabase("verification-tests.db");Records r=Records.isolatedForTest(c);JSONObject row=run("2026-11-16","clockin");Evidence e=new Evidence("2026-11-16","clockin","10:23","正常");r.verified(row,e);row.put("status","ALREADY_DONE").put("mailStatus","SENDING");r.put(row);r.recoverInterrupted();assertEquals("UNKNOWN",r.get(row.getString("id")).getString("mailStatus"));assertTrue(r.evidenceMailed(e.fingerprint()));assertFalse(r.evidenceMailed(new Evidence("2026-11-16","clockout","10:23","正常").fingerprint()));r.close();
     }
-    public void testCalendarScreenshotAndWeekdayCrossCheck()throws Exception{
-        Bitmap image=BitmapFactory.decodeStream(getInstrumentation().getContext().getAssets().open("calendar.png"));
-        String correct=read(image,2026,11);assertEquals("2026-11-16",correct);
-        String wrongMonth=read(image,2026,12);assertNull(wrongMonth);image.recycle();
-    }
-    private String read(Bitmap image,int year,int month)throws Exception{
-        CountDownLatch done=new CountDownLatch(1);String[] out=new String[1];CalendarReader[] reader=new CalendarReader[1];
-        getInstrumentation().runOnMainSync(()->{reader[0]=new CalendarReader();reader[0].readSelected(image,year,month,new Rect(44,277,276,336),new Rect(33,406,177,444),new Rect(902,406,1047,444),(date,reason)->{out[0]=date;done.countDown();});});
-        assertTrue("Bundled OCR timed out",done.await(35,TimeUnit.SECONDS));getInstrumentation().runOnMainSync(()->reader[0].close());return out[0];
+    public void testMonthEndScreenshotHasVerifiedNativeDate()throws Exception{
+        Bitmap image=BitmapFactory.decodeStream(getInstrumentation().getContext().getAssets().open("calendar-grid/2026-11-30.png"));
+        String[] out=new String[1];CalendarReader reader=new CalendarReader();reader.readGrid(image,CalendarGridFixtures.layout(2026,11),(date,reason)->out[0]=date);
+        assertEquals("2026-11-30",out[0]);image.recycle();reader.close();
     }
 }

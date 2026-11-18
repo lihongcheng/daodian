@@ -6,12 +6,16 @@ android {
     useLibrary 'android.test.mock'
     compileSdk 35
     buildToolsVersion '35.0.0'
-    defaultConfig { applicationId 'com.daodian.clock'; minSdk 30; targetSdk 35; versionCode 3; versionName '1.1-rc2'; testInstrumentationRunner 'android.test.InstrumentationTestRunner' }
+    defaultConfig { applicationId 'com.daodian.clock'; minSdk 30; targetSdk 35; versionCode 5; versionName '1.1-rc4'; testInstrumentationRunner 'android.test.InstrumentationTestRunner' }
     buildFeatures { buildConfig true }
     signingConfigs { debug { storeFile rootProject.file(System.getenv('DAODIAN_DEBUG_KEYSTORE') ?: '.local/debug.keystore'); storePassword 'android'; keyAlias 'androiddebugkey'; keyPassword 'android' } }
     buildTypes { debug { signingConfig signingConfigs.debug }; release { minifyEnabled false } }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }
-dependencies { implementation 'androidx.core:core:1.9.0'; implementation 'com.google.mlkit:text-recognition-chinese:16.0.1'; testImplementation 'junit:junit:4.13.2' }
+dependencies { implementation 'androidx.core:core:1.9.0'; testImplementation 'junit:junit:4.13.2' }
 tasks.register('ensureDebugKey') { doLast { def key = rootProject.file(System.getenv('DAODIAN_DEBUG_KEYSTORE') ?: '.local/debug.keystore'); if (!key.exists()) { key.parentFile.mkdirs(); exec { commandLine new File(System.getProperty('java.home'), 'bin/keytool'), '-genkeypair', '-keystore', key, '-storepass', 'android', '-keypass', 'android', '-alias', 'androiddebugkey', '-dname', 'CN=Daodian Development', '-keyalg', 'RSA', '-validity', '10000' } } } }
 tasks.matching { it.name == 'validateSigningDebug' }.configureEach { dependsOn 'ensureDebugKey' }
+// AGP 8.6 UTP deletes the target package (including user data) after this task.
+tasks.matching { it.name == 'connectedDebugAndroidTest' }.configureEach {
+    doFirst { throw new GradleException('设备测试请运行 scripts/run-device-tests.sh <serial>；此 Gradle 入口会在结束时卸载主 App。') }
+}

@@ -1,0 +1,445 @@
+[
+  {
+    "source": "2026-10-01",
+    "asset": "calendar-grid/2026-10-01.png",
+    "expected": "2026-10-01",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-02",
+    "asset": "calendar-grid/2026-10-02.png",
+    "expected": "2026-10-02",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-03",
+    "asset": "calendar-grid/2026-10-03.png",
+    "expected": "2026-10-03",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-04",
+    "asset": "calendar-grid/2026-10-04.png",
+    "expected": "2026-10-04",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-05",
+    "asset": "calendar-grid/2026-10-05.png",
+    "expected": "2026-10-05",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-06",
+    "asset": "calendar-grid/2026-10-06.png",
+    "expected": "2026-10-06",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-07",
+    "asset": "calendar-grid/2026-10-07.png",
+    "expected": "2026-10-07",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-08",
+    "asset": "calendar-grid/2026-10-08.png",
+    "expected": "2026-10-08",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-09",
+    "asset": "calendar-grid/2026-10-09.png",
+    "expected": "2026-10-09",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-10",
+    "asset": "calendar-grid/2026-10-10.png",
+    "expected": "2026-10-10",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-11",
+    "asset": "calendar-grid/2026-10-11.png",
+    "expected": "2026-10-11",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-12",
+    "asset": "calendar-grid/2026-10-12.png",
+    "expected": "2026-10-12",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-13",
+    "asset": "calendar-grid/2026-10-13.png",
+    "expected": "2026-10-13",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-14",
+    "asset": "calendar-grid/2026-10-14.png",
+    "expected": "2026-10-14",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-15",
+    "asset": "calendar-grid/2026-10-15.png",
+    "expected": "2026-10-15",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-16",
+    "asset": "calendar-grid/2026-10-16.png",
+    "expected": "2026-10-16",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-17",
+    "asset": "calendar-grid/2026-10-17.png",
+    "expected": "2026-10-17",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-18",
+    "asset": "calendar-grid/2026-10-18.png",
+    "expected": "2026-10-18",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-19",
+    "asset": "calendar-grid/2026-10-19.png",
+    "expected": "2026-10-19",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-20",
+    "asset": "calendar-grid/2026-10-20.png",
+    "expected": "2026-10-20",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-21",
+    "asset": "calendar-grid/2026-10-21.png",
+    "expected": "2026-10-21",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-22",
+    "asset": "calendar-grid/2026-10-22.png",
+    "expected": "2026-10-22",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-23",
+    "asset": "calendar-grid/2026-10-23.png",
+    "expected": "2026-10-23",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-24",
+    "asset": "calendar-grid/2026-10-24.png",
+    "expected": "2026-10-24",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-25",
+    "asset": "calendar-grid/2026-10-25.png",
+    "expected": "2026-10-25",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-26",
+    "asset": "calendar-grid/2026-10-26.png",
+    "expected": "2026-10-26",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-27",
+    "asset": "calendar-grid/2026-10-27.png",
+    "expected": "2026-10-27",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-28",
+    "asset": "calendar-grid/2026-10-28.png",
+    "expected": "2026-10-28",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-29",
+    "asset": "calendar-grid/2026-10-29.png",
+    "expected": "2026-10-29",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-30",
+    "asset": "calendar-grid/2026-10-30.png",
+    "expected": "2026-10-30",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-10-31",
+    "asset": "calendar-grid/2026-10-31.png",
+    "expected": "2026-10-31",
+    "year": 2026,
+    "month": 10
+  },
+  {
+    "source": "2026-11-01",
+    "asset": "calendar-grid/2026-11-01.png",
+    "expected": "2026-11-01",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-02",
+    "asset": "calendar-grid/2026-11-02.png",
+    "expected": "2026-11-02",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-03",
+    "asset": "calendar-grid/2026-11-03.png",
+    "expected": "2026-11-03",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-04",
+    "asset": "calendar-grid/2026-11-04.png",
+    "expected": "2026-11-04",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-05",
+    "asset": "calendar-grid/2026-11-05.png",
+    "expected": "2026-11-05",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-06",
+    "asset": "calendar-grid/2026-11-06.png",
+    "expected": "2026-11-06",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-07",
+    "asset": "calendar-grid/2026-11-07.png",
+    "expected": "2026-11-07",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-08",
+    "asset": "calendar-grid/2026-11-08.png",
+    "expected": "2026-11-08",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-09",
+    "asset": "calendar-grid/2026-11-09.png",
+    "expected": "2026-11-09",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-10",
+    "asset": "calendar-grid/2026-11-10.png",
+    "expected": "2026-11-10",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-11",
+    "asset": "calendar-grid/2026-11-11.png",
+    "expected": "2026-11-11",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-12",
+    "asset": "calendar-grid/2026-11-12.png",
+    "expected": "2026-11-12",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-13",
+    "asset": "calendar-grid/2026-11-13.png",
+    "expected": "2026-11-13",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-14",
+    "asset": "calendar-grid/2026-11-14.png",
+    "expected": "2026-11-14",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-15",
+    "asset": "calendar-grid/2026-11-15.png",
+    "expected": "2026-11-15",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-16",
+    "asset": "calendar-grid/2026-11-16.png",
+    "expected": "2026-11-16",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-17",
+    "asset": "calendar-grid/2026-11-17.png",
+    "expected": "2026-11-17",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-18",
+    "asset": "calendar-grid/2026-11-18.png",
+    "expected": "2026-11-18",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-19",
+    "asset": "calendar-grid/2026-11-19.png",
+    "expected": "2026-11-19",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-20",
+    "asset": "calendar-grid/2026-11-20.png",
+    "expected": "2026-11-20",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-21",
+    "asset": "calendar-grid/2026-11-21.png",
+    "expected": "2026-11-21",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-22",
+    "asset": "calendar-grid/2026-11-22.png",
+    "expected": "2026-11-22",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-23",
+    "asset": "calendar-grid/2026-11-23.png",
+    "expected": "2026-11-23",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-24",
+    "asset": "calendar-grid/2026-11-24.png",
+    "expected": "2026-11-24",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-25",
+    "asset": "calendar-grid/2026-11-25.png",
+    "expected": "2026-11-25",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-26",
+    "asset": "calendar-grid/2026-11-26.png",
+    "expected": "2026-11-26",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-27",
+    "asset": "calendar-grid/2026-11-27.png",
+    "expected": "2026-11-27",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-28",
+    "asset": "calendar-grid/2026-11-28.png",
+    "expected": "2026-11-28",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-29",
+    "asset": "calendar-grid/2026-11-29.png",
+    "expected": "2026-11-29",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-30",
+    "asset": "calendar-grid/2026-11-30.png",
+    "expected": "2026-11-30",
+    "year": 2026,
+    "month": 11
+  },
+  {
+    "source": "2026-11-29-collapsed",
+    "asset": "calendar-grid/2026-11-29-collapsed.png",
+    "expected": "2026-11-29",
+    "year": 2026,
+    "month": 11,
+    "layout": "collapsed"
+  },
+  {
+    "source": "2026-11-30-collapsed",
+    "asset": "calendar-grid/2026-11-30-collapsed.png",
+    "expected": "2026-11-30",
+    "year": 2026,
+    "month": 11,
+    "layout": "collapsed"
+  }
+]

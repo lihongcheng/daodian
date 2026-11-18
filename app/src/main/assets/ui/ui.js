@@ -13,7 +13,7 @@
   let s={},view='home',history=[],draft=null,mailDraft=null,kind='clockout',selected='',sheet=null,filters={kind:'all',status:'all',date:''},pendingAt=0,first=true,error='',toastTimer;
   const statusLabel=r=>({RUNNING:'执行中',PASSED:'界面已到达',SUCCESS:'打卡已核验',ALREADY_DONE:'已有记录',UNKNOWN:'提交结果不明',FAILED:'未完成',BLOCKED:'条件未满足',STOPPED:'已停止',CHECK_REQUIRED:'页面待确认'}[r.status]||r.status);
   const statusColor=r=>['PASSED','SUCCESS','ALREADY_DONE'].includes(r.status)?'green':r.status==='RUNNING'?'blue':r.status==='CHECK_REQUIRED'||r.status==='UNKNOWN'||r.status==='BLOCKED'?'amber':'red';
-  const mailLabel=r=>({SENT:'邮件已发送',DEDUPLICATED:'该记录邮件已处理',SENDING:'邮件发送中',FAILED:'邮件未发送',UNKNOWN:'发送结果不明',UNCONFIGURED:'邮箱未配置',DISABLED:'邮件通知关闭',NO_SCREENSHOT:'缺少截图，未发送',NOT_SENT:'尚未发送'}[r.mailStatus]||'尚未发送');
+  const mailLabel=r=>({VERIFICATION_ONLY:'只核验，未发送邮件',SENT:'邮件已发送',DEDUPLICATED:'该记录邮件已处理',SENDING:'邮件发送中',FAILED:'邮件未发送',UNKNOWN:'发送结果不明',UNCONFIGURED:'邮箱未配置',DISABLED:'邮件通知关闭',NO_SCREENSHOT:'缺少截图，未发送',NOT_SENT:'尚未发送'}[r.mailStatus]||'尚未发送');
   const perms=[['access','无障碍服务','读取企微记录并按所选模式执行','shield'],['alarm','闹钟与提醒','按自定义时间触发所选模式','alarm'],['battery','后台运行','建议取消电池优化，避免任务延迟','battery'],['boot','自启动设置','小米系统中需允许自动启动','boot'],['notification','通知','显示执行进度和真实核验结果','bell']];
   function invoke(action,data={}){try{const result=JSON.parse(AndroidBridge.invoke(action,JSON.stringify(data)));if(!result.ok){toast(result.error||'操作未完成');return false;}return true;}catch(e){toast('请在 Android 应用中使用此功能');return false;}}
   function read(){try{return JSON.parse(AndroidBridge.state());}catch(e){return {today:date(Date.now()),now:Date.now(),clock:fmt(Date.now()),master:false,plans:{},permissions:{},records:[],mail:{},next:{},testOnly:true,bridgeUnavailable:true};}}

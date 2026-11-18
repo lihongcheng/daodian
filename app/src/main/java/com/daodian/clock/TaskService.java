@@ -18,6 +18,11 @@ public final class TaskService extends Service {
     public static void start(Context c,String kind,String trigger,long at,String date,String mode){
         c.startForegroundService(new Intent(c,TaskService.class).putExtra("kind",kind).putExtra("trigger",trigger).putExtra("plannedAt",at).putExtra("date",date).putExtra("mode",mode));
     }
+    public static void verifyRecords(Context c,String kind){
+        if(!BuildConfig.DEBUG||!AttendanceRules.validKind(kind))throw new IllegalArgumentException();
+        c.startForegroundService(new Intent(c,TaskService.class).putExtra("kind",kind).putExtra("mode","REAL").putExtra("verificationOnly",true)
+            .putExtra("trigger","只核验").putExtra("plannedAt",System.currentTimeMillis()).putExtra("date",LocalDate.now(ScheduleRules.ZONE).toString()));
+    }
     public static void cancel(Context c){if(instance!=null)instance.finish("STOPPED","用户停止本次执行",null);else c.stopService(new Intent(c,TaskService.class));}
     public void onCreate(){super.onCreate();instance=this;Notifications.init(this);Records.get(this).recoverInterrupted();}
     public int onStartCommand(Intent i,int flags,int startId){
@@ -31,7 +36,7 @@ public final class TaskService extends Service {
             record=new JSONObject().put("id",UUID.randomUUID().toString()).put("kind",kind).put("mode",mode).put("trigger",i.getStringExtra("trigger"))
                 .put("date",date).put("plannedAt",i.getLongExtra("plannedAt",System.currentTimeMillis())).put("startedAt",System.currentTimeMillis())
                 .put("status","RUNNING").put("step","检查手机状态").put("stepIndex",0).put("submissionPossible",false).put("submitted",false)
-                .put("checkOnly","REAL".equals(mode)&&Records.get(this).guarded(date,kind)).put("mailStatus","NOT_SENT").put("timeline",new JSONArray());
+                .put("verificationOnly",i.getBooleanExtra("verificationOnly",false)).put("checkOnly","REAL".equals(mode)&&(i.getBooleanExtra("verificationOnly",false)||Records.get(this).guarded(date,kind))).put("mailStatus","NOT_SENT").put("timeline",new JSONArray());
             step(0,record.optBoolean("checkOnly")?"已有执行保护记录，本次只核查企微记录":"检查手机状态");
             KeyguardManager guard=getSystemService(KeyguardManager.class);
             if(guard.isDeviceLocked()){finish("BLOCKED","手机处于安全锁屏，请先手动解锁；应用不会输入密码",null);return START_NOT_STICKY;}
@@ -84,9 +89,9 @@ public final class TaskService extends Service {
             boolean verified="SUCCESS".equals(status)||"ALREADY_DONE".equals(status),report=verified||"PASSED".equals(status);
             Notifications.result(this,20,SafetyRules.kindLabel(record.optString("kind"))+(verified?"记录已核验":"PASSED".equals(status)?"界面测试完成":"执行未完成"),message);
             JSONObject saved=new JSONObject(record.toString());Prefs p=new Prefs(this);
-            if(report&&screenshot!=null&&p.mail().optBoolean("enabled")&&p.mail().optBoolean("configured")){
+            if(report&&!record.optBoolean("verificationOnly")&&screenshot!=null&&p.mail().optBoolean("enabled")&&p.mail().optBoolean("configured")){
                 new Thread(()->{MailJobs.send(this,saved,false);handler.post(this::stopAfterMail);},"attendance-report-mail").start();
-            }else{if(report){record.put("mailStatus",screenshot==null?"NO_SCREENSHOT":p.mail().optBoolean("enabled")?"UNCONFIGURED":"DISABLED");persist();}stopAfterMail();}
+            }else{if(report){record.put("mailStatus",record.optBoolean("verificationOnly")?"VERIFICATION_ONLY":screenshot==null?"NO_SCREENSHOT":p.mail().optBoolean("enabled")?"UNCONFIGURED":"DISABLED");persist();}stopAfterMail();}
         }catch(Exception e){stopAfterMail();}
     }
     private void stopAfterMail(){if(wakeLock!=null&&wakeLock.isHeld())wakeLock.release();stopForeground(STOP_FOREGROUND_REMOVE);stopSelf();Scheduler.reschedule(getApplicationContext());}

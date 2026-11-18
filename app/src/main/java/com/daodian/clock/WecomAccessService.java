@@ -19,7 +19,8 @@ public final class WecomAccessService extends AccessibilityService {
     private TaskService task;
     private String runId,kind,date,mode,phase;
     private boolean active,busy,reserved,returning,submitted,checkOnly,flexibleAllowed;
-    private int generation,stableCount,verifyRefreshes,conditionRefreshes,dateSelections;
+    private int generation,stableCount,verifyRefreshes,conditionRefreshes,dateSelections,calendarExpansions;
+    private long calendarExpandAt;
     private long deadline,lastClick,phaseAt,lastRead;
     private String stableSignature="";
     protected void onServiceConnected(){instance=this;calendar=new CalendarReader();}
@@ -27,10 +28,38 @@ public final class WecomAccessService extends AccessibilityService {
     public void onDestroy(){if(task!=null)task.finish("CHECK_REQUIRED","无障碍服务已断开",null);instance=null;halt();if(calendar!=null)calendar.close();super.onDestroy();}
     public void onAccessibilityEvent(AccessibilityEvent e){if(active&&!busy&&!handler.hasCallbacks(tick))handler.postDelayed(tick,200);}
     public String inspectUi(){if(!WecomUi.wecom(getRootInActiveWindow()))return "[]";org.json.JSONArray a=new org.json.JSONArray();for(AccessibilityNodeInfo n:WecomUi.all(getRootInActiveWindow()))try{String id=n.getViewIdResourceName();if(id!=null)a.put(new JSONObject().put("id",id).put("visible",n.isVisibleToUser()).put("bounds",WecomUi.bounds(n).toShortString()).put("text",WecomUi.text(n.getText())));}catch(Exception ignored){}return a.toString();}
+    /** Debug-only read probe: no TaskService, input, submission guard, or mail side effects. */
+    public void inspectCalendar(java.util.function.Consumer<String> done){
+        if(!BuildConfig.DEBUG||active){done.accept("calendar_probe_unavailable");return;}
+        takeScreenshot(0,getMainExecutor(),new TakeScreenshotCallback(){
+            public void onSuccess(ScreenshotResult result){
+                HardwareBuffer buffer=result.getHardwareBuffer();Bitmap bitmap=null;
+                try{
+                    Bitmap hardware=Bitmap.wrapHardwareBuffer(buffer,result.getColorSpace());if(hardware==null)throw new IOException();
+                    bitmap=hardware.copy(Bitmap.Config.ARGB_8888,false);hardware.recycle();final Bitmap image=bitmap;
+                    AccessibilityNodeInfo root=getRootInActiveWindow();CalendarReader probe=new CalendarReader();
+                    probe.read(image,root,(observed,reason)->{
+                        try{
+                            JSONObject out=new JSONObject().put("verificationOnly",true).put("submitted",false).put("mailSent",false)
+                                .put("date",observed==null?JSONObject.NULL:observed).put("reason",reason).put("needsExpansion",probe.needsExpansion(root));
+                            if(observed!=null){WecomUi.Daily day=WecomUi.daily(root,observed);out.put("recordsComplete",day.complete);
+                                if(day.clockin!=null)out.put("clockin",new JSONObject().put("time",day.clockin.time).put("state",day.clockin.status));
+                                if(day.clockout!=null)out.put("clockout",new JSONObject().put("time",day.clockout.time).put("state",day.clockout.status));}
+                            File directory=getExternalFilesDir("verification");if(directory==null)throw new IOException();directory.mkdirs();
+                            File file=new File(directory,"calendar-probe-"+java.util.UUID.randomUUID()+".png");
+                            try(FileOutputStream stream=new FileOutputStream(file)){if(!image.compress(Bitmap.CompressFormat.PNG,100,stream))throw new IOException();stream.getFD().sync();}
+                            out.put("screenshot",file.getAbsolutePath());done.accept(out.toString());
+                        }catch(Exception e){done.accept("calendar_probe_failed");}finally{probe.close();}
+                    });
+                }catch(Exception e){done.accept("calendar_probe_failed");}finally{if(bitmap!=null)bitmap.recycle();buffer.close();}
+            }
+            public void onFailure(int code){done.accept("calendar_capture_failed_"+code);}
+        });
+    }
     public void begin(TaskService service,String id){
         halt();task=service;runId=id;JSONObject r=service.activeRecord();if(r==null)return;
         kind=r.optString("kind");date=r.optString("date");mode=r.optString("mode");checkOnly=r.optBoolean("checkOnly");
-        active=true;reserved=false;returning=false;submitted=false;flexibleAllowed=false;stableCount=0;verifyRefreshes=0;conditionRefreshes=0;dateSelections=0;lastClick=0;lastRead=0;
+        active=true;reserved=false;returning=false;submitted=false;flexibleAllowed=false;stableCount=0;verifyRefreshes=0;conditionRefreshes=0;dateSelections=0;calendarExpansions=0;calendarExpandAt=0;lastClick=0;lastRead=0;
         deadline=SystemClock.elapsedRealtime()+165000;transition("NAVIGATE",1,"打开企业微信");
         try{
             // Obfuscated camera IDs are version-specific. Navigation-only tests remain available on other versions.
@@ -165,6 +194,17 @@ public final class WecomAccessService extends AccessibilityService {
         catch(Exception e){task.finish("CHECK_REQUIRED","界面截图保存失败",null);}finally{bitmap.recycle();busy=false;}
     });}
     private void readRecords(AccessibilityNodeInfo root){
+        long clock=SystemClock.elapsedRealtime();
+        if(calendarExpandAt!=0&&clock-calendarExpandAt<2000)return;
+        if(calendar.needsExpansion(root)){
+            if(calendarExpandAt!=0){if(clock-calendarExpandAt>5000)fail("CHECK_REQUIRED","整月日历未展开，停止日期核验");return;}
+            if(calendarExpansions>=5){fail("CHECK_REQUIRED","日历反复折叠，停止日期核验");return;}
+            if(act(WecomUi.visibleId(root,"bzw"),"展开日历")){
+                calendarExpansions++;calendarExpandAt=clock;stableCount=0;task.step(2,"展开整月日历，核验实际选中日期");
+            }
+            return;
+        }
+        calendarExpandAt=0;
         if(SystemClock.elapsedRealtime()-lastRead<1300)return;lastRead=SystemClock.elapsedRealtime();
         frame((bitmap,fresh)->{
             if(!WecomUi.statistics(fresh)){bitmap.recycle();busy=false;later();return;}
@@ -175,8 +215,9 @@ public final class WecomAccessService extends AccessibilityService {
                     AccessibilityNodeInfo live=getRootInActiveWindow();
                     if(!WecomUi.statistics(live)){stableCount=0;return;}
                     if(observedDate==null){if(age()>25000)task.finish("CHECK_REQUIRED",reason,save(bitmap,"check"));return;}
+                    if(!calendar.matchesLastLayout(live)){stableCount=0;return;}
                     if(!date.equals(observedDate)){
-                        Point today=calendar.sameWeekTarget(observedDate,date);
+                        Point today=calendar.targetInMonth(observedDate,date);
                         if(dateSelections++<1&&today!=null&&selectCalendarDay(today)){
                             stableCount=0;task.step(2,"已选择当天日期，等待企微重新加载记录");return;
                         }
@@ -208,8 +249,7 @@ public final class WecomAccessService extends AccessibilityService {
     private boolean selectCalendarDay(Point point){
         AccessibilityNodeInfo root=getRootInActiveWindow();
         if(!current()||!WecomUi.statistics(root)||!AttendanceRules.mayAct(mode,phase,"选择日期",false,true)||SystemClock.elapsedRealtime()-lastClick<1200)return false;
-        Rect full=WecomUi.bounds(root),week=WecomUi.bounds(WecomUi.id(root,"c0b"));
-        if(point.x<full.left||point.x>full.right||point.y<week.bottom||point.y>full.height()*.5)return false;
+        if(!calendar.acceptsTarget(root,point))return false;
         Path path=new Path();path.moveTo(point.x,point.y);lastClick=SystemClock.elapsedRealtime();
         return dispatchGesture(new GestureDescription.Builder().addStroke(new GestureDescription.StrokeDescription(path,0,70)).build(),null,null);
     }
