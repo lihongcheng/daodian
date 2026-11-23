@@ -13,6 +13,7 @@ public final class DebugReceiver extends BroadcastReceiver {
                 return;
             }
             if("com.daodian.clock.RUN_VERIFY".equals(action)){TaskService.verifyRecords(c,i.getStringExtra("kind"));setResultData("started_verification_only");return;}
+            if("com.daodian.clock.PROBE_ACCESS".equals(action)){TaskService.probeAccess(c,i.getStringExtra("kind"));setResultData("started_access_probe_no_ui_no_mail");return;}
             if("com.daodian.clock.PREPARE_REBOOT_TEST".equals(action)){setResultData(DebugChecks.prepareReboot(c,i.getIntExtra("delay",240)));return;}
             if("com.daodian.clock.RESTORE_TEST_CONFIG".equals(action)){DebugChecks.restore(c);setResultData("restored");return;}
 if("com.daodian.clock.INSPECT_UI".equals(action)){setResultData(WecomAccessService.instance==null?"disconnected":WecomAccessService.instance.inspectUi());return;}

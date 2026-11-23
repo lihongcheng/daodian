@@ -23,9 +23,11 @@ public final class WecomAccessService extends AccessibilityService {
     private long calendarExpandAt;
     private long deadline,lastClick,phaseAt,lastRead;
     private String stableSignature="";
-    protected void onServiceConnected(){instance=this;calendar=new CalendarReader();}
+    protected void onServiceConnected(){super.onServiceConnected();instance=this;if(calendar==null)calendar=new CalendarReader();sendBroadcast(new Intent("com.daodian.clock.STATE_CHANGED").setPackage(getPackageName()));Scheduler.accessConnected(this);}
     public void onInterrupt(){if(task!=null)task.finish("CHECK_REQUIRED","无障碍服务被中断",null);halt();}
-    public void onDestroy(){if(task!=null)task.finish("CHECK_REQUIRED","无障碍服务已断开",null);instance=null;halt();if(calendar!=null)calendar.close();super.onDestroy();}
+    public boolean onUnbind(Intent intent){disconnect();return super.onUnbind(intent);}
+    private void disconnect(){if(instance==this)instance=null;if(task!=null)task.finish("CHECK_REQUIRED","无障碍服务已断开",null);halt();sendBroadcast(new Intent("com.daodian.clock.STATE_CHANGED").setPackage(getPackageName()));}
+    public void onDestroy(){disconnect();if(calendar!=null){calendar.close();calendar=null;}super.onDestroy();}
     public void onAccessibilityEvent(AccessibilityEvent e){if(active&&!busy&&!handler.hasCallbacks(tick))handler.postDelayed(tick,200);}
     public String inspectUi(){if(!WecomUi.wecom(getRootInActiveWindow()))return "[]";org.json.JSONArray a=new org.json.JSONArray();for(AccessibilityNodeInfo n:WecomUi.all(getRootInActiveWindow()))try{String id=n.getViewIdResourceName();if(id!=null)a.put(new JSONObject().put("id",id).put("visible",n.isVisibleToUser()).put("bounds",WecomUi.bounds(n).toShortString()).put("text",WecomUi.text(n.getText())));}catch(Exception ignored){}return a.toString();}
     /** Debug-only read probe: no TaskService, input, submission guard, or mail side effects. */

@@ -26,6 +26,10 @@ v3 数据库仅迁移开发 RC1 的“进入相机前预留”：旧协议在确
 
 ## 恢复与调度
 
+无障碍系统开关由 AccessibilityStatus 读取；连接状态由服务的 onServiceConnected/onUnbind/onDestroy 管理。TaskService 进入 WAIT_ACCESS，最多等待 15 秒后区分 ACCESS_DISABLED 与 ACCESS_DISCONNECTED。开关关闭由用户在系统设置恢复，程序不自行启用。
+
+AccessRecoveryRules 只允许原定时任务在原计划起两小时内、当天、相同计划版本与模式下恢复一次。Records 在事务中验证最新执行记录、提交保护并消费恢复机会；恢复任务重新走当天查重与提交保护。原版没有故障类别和计划版本的记录不自动恢复。
+
 计划和已抽取随机时刻写入 SharedPreferences。普通系统闹钟通过 AlarmReceiver 启动前台任务，BOOT_COMPLETED、包升级和时间变化重新安排。定时“当日已尝试”与真实打卡保护分开，旧的界面测试完成标记不阻止真实执行。
 
 唤醒页面先显示，等待 Android 确认可交互且普通锁屏解除，然后才启动企微。安全锁不会由应用自动输入密码。小米还需要自启动、后台弹出、锁屏显示和省电设置。
