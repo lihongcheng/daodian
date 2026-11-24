@@ -21,6 +21,16 @@ public class AttendanceTests {
     @Test public void testModeNeverTakesPhotoOrConfirms(){for(String phase:new String[]{"OPEN_CAMERA","CAMERA","PREVIEW","VERIFY"})for(String a:new String[]{"拍照打卡","拍摄","确认照片"})assertFalse(AttendanceRules.mayAct("TEST",phase,a,true,true));}
     @Test public void confirmationRequiresReservationAndCorrectScreen(){assertFalse(AttendanceRules.mayAct("REAL","CAMERA","确认照片",true,true));assertFalse(AttendanceRules.mayAct("REAL","PREVIEW","确认照片",false,true));assertFalse(AttendanceRules.mayAct("REAL","PREVIEW","确认照片",true,false));assertTrue(AttendanceRules.mayAct("REAL","PREVIEW","确认照片",true,true));}
     @Test public void verifyPhaseNeverResubmits(){for(String a:new String[]{"拍照打卡","拍摄","确认照片","更新打卡"})assertFalse(AttendanceRules.mayAct("REAL","VERIFY",a,true,true));}
+    @Test public void staleEntryRecoveryAllowsNavigationOnlyBeforePhotography(){
+        assertTrue(AttendanceRules.mayAct("REAL","OPEN_CAMERA","退出打卡页",false,true));
+        assertFalse(AttendanceRules.mayAct("REAL","OPEN_CAMERA","退出打卡页",true,true));
+        assertTrue(AttendanceRules.mayAct("REAL","REOPEN_ATTENDANCE","重新进入打卡",false,true));
+        assertTrue(AttendanceRules.mayAct("REAL","REOPEN_ATTENDANCE","统计",false,true));
+        for(String action:new String[]{"拍照打卡","拍摄","确认照片","更新打卡","返回","选择日期"})
+            assertFalse(AttendanceRules.mayAct("REAL","REOPEN_ATTENDANCE",action,true,true));
+        assertFalse(AttendanceRules.mayAct("REAL","VERIFY","退出打卡页",false,true));
+        assertFalse(AttendanceRules.mayAct("TEST","REOPEN_ATTENDANCE","重新进入打卡",false,true));
+    }
     @Test(expected=IllegalArgumentException.class)public void missingRecordStatusRejected(){new Evidence(day,"clockin","10:23","");}
     @Test(expected=IllegalArgumentException.class)public void notClockedIsNotEvidence(){new Evidence(day,"clockin","10:23","未打卡");}
     @Test(expected=IllegalArgumentException.class)public void invalidTimeRejected(){new Evidence(day,"clockin","25:01","正常");}

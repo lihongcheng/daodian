@@ -19,6 +19,7 @@ public final class WecomAccessService extends AccessibilityService {
     private TaskService task;
     private String runId,kind,date,mode,phase;
     private boolean active,busy,reserved,returning,submitted,checkOnly,flexibleAllowed;
+    private boolean entryReloaded,awaitingReopenedEntry;
     private int generation,stableCount,verifyRefreshes,conditionRefreshes,dateSelections,calendarExpansions;
     private long calendarExpandAt;
     private long deadline,lastClick,phaseAt,lastRead;
@@ -62,6 +63,8 @@ public final class WecomAccessService extends AccessibilityService {
         halt();task=service;runId=id;JSONObject r=service.activeRecord();if(r==null)return;
         kind=r.optString("kind");date=r.optString("date");mode=r.optString("mode");checkOnly=r.optBoolean("checkOnly");
         active=true;reserved=false;returning=false;submitted=false;flexibleAllowed=false;stableCount=0;verifyRefreshes=0;conditionRefreshes=0;dateSelections=0;calendarExpansions=0;calendarExpandAt=0;lastClick=0;lastRead=0;
+        entryReloaded=false;
+        awaitingReopenedEntry=false;
         deadline=SystemClock.elapsedRealtime()+165000;transition("NAVIGATE",1,"打开企业微信");
         try{
             // Obfuscated camera IDs are version-specific. Navigation-only tests remain available on other versions.
@@ -81,7 +84,9 @@ public final class WecomAccessService extends AccessibilityService {
         if(!current()||!WecomUi.wecom(front)||getSystemService(KeyguardManager.class).isDeviceLocked())return false;
         if("确认照片".equals(action)&&!task.activeRecord().optBoolean("confirmationAttempted"))return false;
         if(!AttendanceRules.mayAct(mode,phase,action,reserved,true)||SystemClock.elapsedRealtime()-lastClick<1200)return false;
-        if("返回".equals(action)){lastClick=SystemClock.elapsedRealtime();return performGlobalAction(GLOBAL_ACTION_BACK);}
+        if ("退出打卡页".equals(action) && !WecomUi.landing(front)) return false;
+        if ("重新进入打卡".equals(action) && !WecomUi.workbench(front)) return false;
+        if("返回".equals(action)||"退出打卡页".equals(action)){lastClick=SystemClock.elapsedRealtime();return performGlobalAction(GLOBAL_ACTION_BACK);}
         if(node==null||!node.refresh()||!node.isEnabled()||!SafetyRules.WECOM_PACKAGE.equals(WecomUi.text(node.getPackageName())))return false;
         AccessibilityNodeInfo candidate=node;
         for(int i=0;i<5&&candidate!=null;i++,candidate=candidate.getParent()){
@@ -133,17 +138,9 @@ public final class WecomAccessService extends AccessibilityService {
                     else if(WecomUi.statistics(root))act(WecomUi.tab(root,"打卡"),"打卡");
                 }else if(WecomUi.statistics(root)&&age()>2200)readRecords(root);
             }else if("OPEN_CAMERA".equals(phase)){
-                if(!WecomUi.landing(root)){later();return;}
-                if(WecomUi.error(root)||!WecomUi.has(root,"你已在打卡范围内")){if(age()>25000)fail("BLOCKED","企微定位或打卡范围未满足");later();return;}
-                if(!task.networkAvailable()){fail("BLOCKED","进入相机前网络不可用");return;}
-                String target=SafetyRules.kindLabel(kind)+"打卡",opposite=SafetyRules.kindLabel("clockin".equals(kind)?"clockout":"clockin")+"打卡";
-                boolean explicit=WecomUi.has(root,target)&&!WecomUi.has(root,opposite);
-                if(!explicit&&!flexibleAllowed){fail("CHECK_REQUIRED","无法确认本次类型的入口；通用拍照入口需核对无固定时段规则");return;}
-                AccessibilityNodeInfo button=WecomUi.exact(root,"拍照打卡");
-                if(button==null){if(age()>15000)fail("CHECK_REQUIRED","没有找到适配的拍照打卡入口");later();return;}
-                reserved=true; // Fresh preflight permits photography; durable reservation happens at confirmation.
-                if(act(button,"拍照打卡"))transition("CAMERA",3,"等待企微相机取景画面");
-                else fail("CHECK_REQUIRED","拍照入口操作结果不明，已保留防重复保护");
+                openCamera(root);
+            }else if("REOPEN_ATTENDANCE".equals(phase)){
+                reopenAttendance(root);
             }else if("CAMERA".equals(phase)){
                 if(WecomUi.camera(root)&&age()>2500){
                     if(!task.networkAvailable()){fail("CHECK_REQUIRED","拍照前网络断开");return;}
@@ -169,6 +166,63 @@ public final class WecomAccessService extends AccessibilityService {
             later();
         }catch(Exception e){fail("CHECK_REQUIRED","读取或保存执行状态失败，请检查企微记录");}
     }};
+    private void openCamera(AccessibilityNodeInfo root) {
+        if (!WecomUi.landing(root)) return;
+        if (WecomUi.loading(root)) {
+            if (age()>25000) fail("CHECK_REQUIRED","企微打卡页一直在加载，尚未进入相机");
+            return;
+        }
+        boolean inRange=WecomUi.visibleExact(root,"你已在打卡范围内")!=null;
+        AccessibilityNodeInfo button=WecomUi.visibleExact(root,"拍照打卡");
+        String target=SafetyRules.kindLabel(kind)+"打卡";
+        String opposite=SafetyRules.kindLabel("clockin".equals(kind)?"clockout":"clockin")+"打卡";
+        boolean explicit=WecomUi.visibleExact(root,target)!=null&&WecomUi.visibleExact(root,opposite)==null;
+        if (WecomUi.error(root)) {
+            if (age()>25000) fail("BLOCKED","企微定位或打卡范围未满足");
+            return;
+        }
+        // A completed card may still expose hidden location controls from the old page.
+        boolean result=WecomUi.completionCard(root);
+        if (button==null && ((result&&age()>2500)||(inRange&&(explicit||flexibleAllowed)&&age()>15000))) {
+            if (entryReloaded) {
+                fail("CHECK_REQUIRED","已重新进入企微打卡页，仍未显示适配的拍照入口");
+            } else if (task.networkAvailable() && act(null,"退出打卡页")) {
+                entryReloaded=true;
+                returning=false;
+                flexibleAllowed=false;
+                dateSelections=0;
+                calendarExpansions=0;
+                calendarExpandAt=0;
+                transition("REOPEN_ATTENDANCE",2,"企微未显示拍照入口，返回工作台后重新核对当天记录");
+            } else {
+                fail("CHECK_REQUIRED","无法重新进入企微打卡页，请检查网络或手动核验");
+            }
+            return;
+        }
+        if (!inRange) {
+            if (age()>25000) fail("BLOCKED","企微定位或打卡范围未满足");
+            return;
+        }
+        if (!task.networkAvailable()) {fail("BLOCKED","进入相机前网络不可用");return;}
+        if (!explicit&&!flexibleAllowed) {fail("CHECK_REQUIRED","无法确认本次类型的入口；通用拍照入口需核对无固定时段规则");return;}
+        if (button==null || result || !button.isEnabled()) {
+            if (age()>15000) fail("CHECK_REQUIRED","没有找到可操作的拍照打卡入口");
+            return;
+        }
+        if (SystemClock.elapsedRealtime()-lastClick<1200) return;
+        reserved=true; // A fresh preflight enables opening the camera; confirmation requires a durable reservation.
+        if (act(button,"拍照打卡")) transition("CAMERA",3,"等待企微相机取景画面");
+        else fail("CHECK_REQUIRED","拍照入口操作结果不明，尚未确认提交");
+    }
+    private void reopenAttendance(AccessibilityNodeInfo root) {
+        if (age()>15000) {fail("CHECK_REQUIRED","企微未能重新打开打卡页并进入统计");return;}
+        if (!awaitingReopenedEntry && WecomUi.workbench(root)) {
+            if (act(WecomUi.visibleExact(root,"打卡"),"重新进入打卡")) awaitingReopenedEntry=true;
+        } else if (awaitingReopenedEntry && WecomUi.landing(root) && !WecomUi.loading(root)
+                && act(WecomUi.tab(root,"统计"),"统计")) {
+            transition("READ_RECORDS",2,"已重新打开打卡页，核对企微当天记录");
+        }
+    }
     private void later(){if(current()&&!busy&&!handler.hasCallbacks(tick))handler.postDelayed(tick,650);}
     private interface Frame {void accept(Bitmap bitmap,AccessibilityNodeInfo root);}
     private void frame(Frame callback){

@@ -31,6 +31,30 @@ final class WecomUi {
         return null;
     }
     static boolean has(AccessibilityNodeInfo root,String value) { return exact(root,value)!=null; }
+    static AccessibilityNodeInfo visibleExact(AccessibilityNodeInfo root, String value) {
+        for (AccessibilityNodeInfo node : all(root)) {
+            if (visible(node) && (value.equals(text(node.getText())) || value.equals(text(node.getContentDescription())))) return node;
+        }
+        return null;
+    }
+    private static boolean visible(AccessibilityNodeInfo node) {
+        return node.isVisibleToUser() && !bounds(node).isEmpty();
+    }
+    static boolean loading(AccessibilityNodeInfo root) {
+        for (AccessibilityNodeInfo node : all(root)) {
+            if (visible(node) && (text(node.getText()).contains("加载中") || text(node.getClassName()).endsWith("ProgressBar"))) return true;
+        }
+        return false;
+    }
+    // Result cards carry no date. They can justify reopening the page, never proving attendance.
+    static boolean completionCard(AccessibilityNodeInfo root) {
+        for (AccessibilityNodeInfo node : all(root)) {
+            if (!visible(node)) continue;
+            String title = text(node.getText()).replaceAll("[\\s\\u3000]+", "");
+            if (title.equals("上班·正常") || title.equals("下班·正常")) return true;
+        }
+        return false;
+    }
     static boolean contains(AccessibilityNodeInfo root,String value) {
         for(AccessibilityNodeInfo n:all(root))if(text(n.getText()).contains(value))return true; return false;
     }

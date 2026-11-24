@@ -2,12 +2,28 @@ package com.daodian.clock;
 import android.test.InstrumentationTestCase;
 import android.graphics.*;
 import android.content.Context;
+import android.view.accessibility.AccessibilityNodeInfo;
 import com.daodian.clock.core.AttendanceRules.Evidence;
 import org.json.*;
 import java.util.*;
 import java.util.concurrent.*;
 
 public class DeviceVerificationTests extends InstrumentationTestCase {
+    public void testStaleCompletionCardIsNotAnActionableEntry(){
+        AccessibilityNodeInfo card=AccessibilityNodeInfo.obtain();
+        try{
+            card.setBoundsInScreen(new Rect(400,720,680,790));
+            card.setText("下班 · 正常");
+            card.setVisibleToUser(true);
+            assertTrue(WecomUi.completionCard(card));
+            assertNull(WecomUi.visibleExact(card,"拍照打卡"));
+            card.setText("拍照打卡");
+            assertFalse(WecomUi.completionCard(card));
+            assertNotNull(WecomUi.visibleExact(card,"拍照打卡"));
+            card.setVisibleToUser(false);
+            assertNull(WecomUi.visibleExact(card,"拍照打卡"));
+        }finally{card.recycle();}
+    }
     private JSONObject run(String date,String kind)throws Exception{return new JSONObject().put("id",UUID.randomUUID().toString()).put("date",date).put("kind",kind).put("mode","REAL").put("status","RUNNING").put("startedAt",System.currentTimeMillis()).put("mailStatus","NOT_SENT");}
     public void testDurableReservationAcrossDatabaseReopen()throws Exception{
         Context c=getInstrumentation().getTargetContext();c.deleteDatabase("verification-tests.db");Records r=Records.isolatedForTest(c);JSONObject first=run("2026-11-16","clockout");r.put(first);assertTrue(r.reserve(first));r.close();

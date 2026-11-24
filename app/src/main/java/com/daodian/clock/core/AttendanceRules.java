@@ -49,7 +49,8 @@ public final class AttendanceRules {
         switch (phase) {
             case "NAVIGATE": return "工作台".equals(action)||"打卡".equals(action)||"统计".equals(action)||"暂不打卡".equals(action)||"返回".equals(action);
             case "READ_RECORDS": return "统计".equals(action)||"打卡".equals(action)||"选择日期".equals(action)||"展开日历".equals(action);
-            case "OPEN_CAMERA": return reserved && "拍照打卡".equals(action);
+            case "OPEN_CAMERA": return reserved ? "拍照打卡".equals(action) : "退出打卡页".equals(action);
+            case "REOPEN_ATTENDANCE": return "重新进入打卡".equals(action)||"统计".equals(action);
             case "CAMERA": return reserved && "拍摄".equals(action);
             case "PREVIEW": return reserved && "确认照片".equals(action);
             case "VERIFY": return "统计".equals(action)||"选择日期".equals(action)||"展开日历".equals(action)||"返回".equals(action)||"暂不打卡".equals(action);
