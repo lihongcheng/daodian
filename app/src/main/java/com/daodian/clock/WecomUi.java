@@ -11,6 +11,10 @@ final class WecomUi {
     static String text(CharSequence c) { return c==null ? "" : c.toString().trim(); }
     static Rect bounds(AccessibilityNodeInfo n) { Rect r=new Rect(); if(n!=null)n.getBoundsInScreen(r); return r; }
     static boolean wecom(AccessibilityNodeInfo n) { return n!=null && SafetyRules.WECOM_PACKAGE.equals(text(n.getPackageName())); }
+    static boolean miuiStartConfirmation(AccessibilityNodeInfo root) {
+        return root != null && "com.miui.securitycenter".equals(text(root.getPackageName()))
+                && contains(root, "启动应用");
+    }
     static List<AccessibilityNodeInfo> all(AccessibilityNodeInfo root) {
         List<AccessibilityNodeInfo> list=new ArrayList<>(); collect(root,list); return list;
     }

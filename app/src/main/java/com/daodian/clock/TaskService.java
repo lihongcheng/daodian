@@ -29,6 +29,13 @@ public final class TaskService extends Service {
             .putExtra("accessProbeOnly",true).putExtra("verificationOnly",true).putExtra("trigger","无障碍诊断")
             .putExtra("plannedAt",System.currentTimeMillis()).putExtra("date",LocalDate.now(ScheduleRules.ZONE).toString()));
     }
+    static void probeWecomLaunch(Context context) {
+        if (!BuildConfig.DEBUG) throw new IllegalStateException();
+        context.startForegroundService(new Intent(context, TaskService.class)
+            .putExtra("kind", "clockin").putExtra("mode", "TEST").putExtra("verificationOnly", true)
+            .putExtra("launchProbe", true).putExtra("trigger", "企微启动诊断")
+            .putExtra("plannedAt", System.currentTimeMillis()).putExtra("date", LocalDate.now(ScheduleRules.ZONE).toString()));
+    }
     public static void cancel(Context c){if(instance!=null)instance.finish("STOPPED","用户停止本次执行",null);else c.stopService(new Intent(c,TaskService.class));}
     public void onCreate(){super.onCreate();instance=this;Notifications.init(this);Records.get(this).recoverInterrupted();}
     public int onStartCommand(Intent i,int flags,int startId){
@@ -45,6 +52,9 @@ public final class TaskService extends Service {
                 .put("verificationOnly",i.getBooleanExtra("verificationOnly",false)).put("checkOnly","REAL".equals(mode)&&(i.getBooleanExtra("verificationOnly",false)||Records.get(this).guarded(date,kind))).put("mailStatus","NOT_SENT").put("timeline",new JSONArray());
             record.put("planRevision",new Prefs(this).plan(kind).revision).put("accessEnabledAtStart",AccessibilityStatus.enabled(this))
                 .put("accessConnectedAtStart",AccessibilityStatus.connected()).put("accessProbeOnly",i.getBooleanExtra("accessProbeOnly",false));
+            if (BuildConfig.DEBUG && "TEST".equals(mode) && record.optBoolean("verificationOnly") && i.getBooleanExtra("launchProbe", false)) {
+                record.put("launchProbe", true);
+            }
             step(0,record.optBoolean("checkOnly")?"已有执行保护记录，本次只核查企微记录":"检查手机状态");
             KeyguardManager guard=getSystemService(KeyguardManager.class);
             if(!date.equals(LocalDate.now(ScheduleRules.ZONE).toString())){finish("CHECK_REQUIRED","执行日期已经变化，请核查目标日期的企微记录",null);return START_NOT_STICKY;}
@@ -78,6 +88,10 @@ public final class TaskService extends Service {
     private void continueWithAccess(){
         KeyguardManager guard=getSystemService(KeyguardManager.class);PowerManager power=getSystemService(PowerManager.class);
         if(guard.isDeviceLocked()){finish("BLOCKED","等待连接后手机处于安全锁屏，请先手动解锁",null);return;}
+        if (record.optBoolean("launchProbe") && (!power.isInteractive() || guard.isKeyguardLocked())) {
+            finish("BLOCKED", "启动诊断需要手机主屏处于可交互状态", null);
+            return;
+        }
         if(!power.isInteractive()||guard.isKeyguardLocked()){
             step(0,"唤醒手机并等待普通锁屏解除");startActivity(new Intent(this,WakeActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             final long wakeDeadline=SystemClock.elapsedRealtime()+10000;

@@ -13,6 +13,7 @@ import java.io.*;
 import java.time.LocalDate;
 
 public final class WecomAccessService extends AccessibilityService {
+    private static final long START_CONFIRMATION_WAIT_MS = 45_000;
     public static volatile WecomAccessService instance;
     private final Handler handler=new Handler(Looper.getMainLooper());
     private CalendarReader calendar;
@@ -20,6 +21,7 @@ public final class WecomAccessService extends AccessibilityService {
     private String runId,kind,date,mode,phase;
     private boolean active,busy,reserved,returning,submitted,checkOnly,flexibleAllowed;
     private boolean entryReloaded,awaitingReopenedEntry;
+    private boolean waitingForWecom, launchProbe;
     private int generation,stableCount,verifyRefreshes,conditionRefreshes,dateSelections,calendarExpansions;
     private long calendarExpandAt;
     private long deadline,lastClick,phaseAt,lastRead;
@@ -65,6 +67,8 @@ public final class WecomAccessService extends AccessibilityService {
         active=true;reserved=false;returning=false;submitted=false;flexibleAllowed=false;stableCount=0;verifyRefreshes=0;conditionRefreshes=0;dateSelections=0;calendarExpansions=0;calendarExpandAt=0;lastClick=0;lastRead=0;
         entryReloaded=false;
         awaitingReopenedEntry=false;
+        waitingForWecom=true;
+        launchProbe=r.optBoolean("launchProbe");
         deadline=SystemClock.elapsedRealtime()+165000;transition("NAVIGATE",1,"打开企业微信");
         try{
             // Obfuscated camera IDs are version-specific. Navigation-only tests remain available on other versions.
@@ -107,10 +111,11 @@ public final class WecomAccessService extends AccessibilityService {
             if(getSystemService(KeyguardManager.class).isDeviceLocked()){fail("BLOCKED","执行过程中手机被锁定");return;}
             if(!date.equals(LocalDate.now(ScheduleRules.ZONE).toString())){fail("CHECK_REQUIRED","日期已经变化，停止本次操作");return;}
             AccessibilityNodeInfo root=getRootInActiveWindow();
+            if (waitingForWecom && !awaitWecomLaunch(root)) {
+                later();
+                return;
+            }
             if(!WecomUi.wecom(root)){
-                if(root!=null&&"com.miui.securitycenter".equals(WecomUi.text(root.getPackageName()))&&WecomUi.contains(root,"启动应用")){
-                    task.finish("BLOCKED","请在小米系统弹窗中允许到点打开企业微信，再重新运行",null);return;
-                }
                 later();return;
             }
             if("REAL".equals(mode)&&WecomUi.contains(root,"打卡条件已变化")&&WecomUi.has(root,"我知道了")){
@@ -166,6 +171,28 @@ public final class WecomAccessService extends AccessibilityService {
             later();
         }catch(Exception e){fail("CHECK_REQUIRED","读取或保存执行状态失败，请检查企微记录");}
     }};
+    private boolean awaitWecomLaunch(AccessibilityNodeInfo root) {
+        boolean confirmationSeen = "WAIT_START_CONFIRMATION".equals(phase);
+        if (confirmationSeen && age() >= START_CONFIRMATION_WAIT_MS) {
+            task.finish("BLOCKED", "小米启动确认后未在45秒内进入企微，请在系统弹窗中允许到点打开企业微信", null);
+            return false;
+        }
+        if (WecomUi.wecom(root)) {
+            waitingForWecom = false;
+            if (launchProbe) {
+                task.finish("PASSED", "企业微信已打开，启动诊断结束", null);
+                return false;
+            }
+            if (confirmationSeen) transition("NAVIGATE", 1, "企业微信已打开，继续核对当天打卡记录");
+            return true;
+        }
+        if (!confirmationSeen && WecomUi.miuiStartConfirmation(root)) {
+            transition("WAIT_START_CONFIRMATION", 1, "请在小米系统弹窗中允许到点打开企业微信，最多等待45秒");
+        } else if (!confirmationSeen && launchProbe && age() >= 15_000) {
+            task.finish("BLOCKED", "启动诊断未能打开企业微信，请检查系统后台启动权限", null);
+        }
+        return false;
+    }
     private void openCamera(AccessibilityNodeInfo root) {
         if (!WecomUi.landing(root)) return;
         if (WecomUi.loading(root)) {

@@ -9,6 +9,21 @@ import java.util.*;
 import java.util.concurrent.*;
 
 public class DeviceVerificationTests extends InstrumentationTestCase {
+    public void testVendorStartConfirmationRequiresSystemPackageAndPrompt() {
+        AccessibilityNodeInfo node = AccessibilityNodeInfo.obtain();
+        try {
+            node.setPackageName("com.miui.securitycenter");
+            node.setText("启动应用");
+            assertTrue(WecomUi.miuiStartConfirmation(node));
+            node.setText("权限管理");
+            assertFalse(WecomUi.miuiStartConfirmation(node));
+            node.setText("启动应用");
+            node.setPackageName("com.tencent.wework");
+            assertFalse(WecomUi.miuiStartConfirmation(node));
+        } finally {
+            node.recycle();
+        }
+    }
     public void testStaleCompletionCardIsNotAnActionableEntry(){
         AccessibilityNodeInfo card=AccessibilityNodeInfo.obtain();
         try{
